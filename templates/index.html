@@ -1,0 +1,149 @@
+{% extends "base.html" %} {% block content %}
+
+<h2>DR Classifier</h2>
+<style> 
+
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        background-color: #2dcba7;
+        color: black;
+        text-align: center;
+        font-size: 25px;
+        font-weight: bold;
+    }
+
+    .popup-container {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .popup-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 50%;
+    }
+
+    .popup-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .popup-close:hover {
+        color: #000;
+    }
+
+    pre {
+        white-space: pre-wrap;
+    }
+</style>
+
+<div>
+    <center>
+        <form id="upload-file" method="POST" enctype="multipart/form-data" action="/predict">
+            <label for="imageUpload" class="upload-label">
+                Choose Object...
+            </label>
+            <input type="file" name="file" id="imageUpload" accept=".png, .jpg, .jpeg">
+            <input type="submit" value="Submit">
+        </form>
+    <center>
+    <div class="image-section" style="display:none;">
+        <div class="img-preview">
+            <div id="imagePreview">
+            </div>
+        </div>
+    </div>
+
+    <div class="loader" style="display:none;"></div>
+
+    <h3 id="result">
+        <span> </span>
+    </h3>
+
+    <div id="popupContainer" class="popup-container">
+        <div id="popupContent" class="popup-content">
+            <span id="popupClose" class="popup-close">&times;</span>
+            <pre id="jsonData"></pre>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    var popupContainer = document.getElementById('popupContainer');
+    var popupContent = document.getElementById('popupContent');
+    var popupClose = document.getElementById('popupClose');
+    var jsonData = document.getElementById('jsonData');
+
+    // Event listener for form submission
+    document.getElementById('upload-file').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        var fileInput = document.getElementById('imageUpload');
+        var file = fileInput.files[0];
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        // Display loader while waiting for the response
+        var loader = document.querySelector('.loader');
+        loader.style.display = 'block';
+
+        // Send the form data using fetch
+        fetch('/predict', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            // Convert data to JSON string without braces
+    // Convert data to JSON string without braces
+    var jsonData = JSON.stringify(data, null, 2).replace(/[{}]/g, '');
+
+    // Remove double quotes from the JSON string
+    jsonData = jsonData.replace(/"/g, '');
+
+    // Display the modified JSON string in the pop-up
+    var popupData = document.getElementById('jsonData');
+    if (popupData) {
+        popupData.textContent = jsonData;
+    }
+
+    // Show the pop-up
+    var popupContainer = document.getElementById('popupContainer');
+    if (popupContainer) {
+        popupContainer.style.display = 'block';
+    }
+        })
+        .catch(function(error) {
+            console.log('Error:', error);
+        })
+            .finally(function() {
+                loader.style.display = 'none'; // Hide the loader
+            });
+    });
+
+    // Event listener for closing the pop-up
+    popupClose.addEventListener('click', function() {
+        popupContainer.style.display = 'none';
+    });
+</script>
+
+{% endblock %}
